@@ -11,209 +11,203 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #f4f4f4;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        h2 {
+            text-align: center;
+            color: #5a51ff; /* <-- Tu color personalizado */
+        }
+        .container {
             display: flex;
             flex-direction: column;
-            height: 100vh; /* Ocupa toda la altura de la pantalla */
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
         }
-        header {
-            background-color: #0055ff;
-            color: white;
-            text-align: center;
-            padding: 1rem 0;
-            flex-shrink: 0;
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
         }
-        .main-container {
-            display: flex;
-            flex: 1;
-            overflow: hidden;
-        }
-        /* Estilos del panel lateral (listado) */
-        #sidebar {
-            width: 350px;
-            background-color: white;
-            overflow-y: auto; /* Permite hacer scroll si hay muchas oficinas */
-            border-right: 1px solid #ccc;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-            z-index: 1000;
-        }
-        .office-item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .office-item:hover {
-            background-color: #f0f5ff; /* Color azul clarito al pasar el ratón */
-        }
-        .office-item h3 {
-            margin: 0 0 5px 0;
-            color: #0055ff;
-            font-size: 15px;
-        }
-        .office-item p {
-            margin: 0;
-            font-size: 13px;
-            color: #555;
-        }
-        /* Estilos del mapa */
+        /* Estilos del Mapa */
         #map {
-            flex: 1; /* Ocupa el resto del espacio disponible */
-            width: 100%;
+            height: 550px;
+            flex: 2;
+            border-radius: 8px;
+            border: 2px solid #eee;
         }
-        /* Estilos de la ventana emergente en el mapa */
-        .popup-content h3 {
+        /* Estilos de la Lista de Oficinas */
+        .office-list {
+            flex: 1;
+            height: 550px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .office-card {
+            background-color: #f0efff; /* <-- Fondo a juego con el color */
+            border-left: 5px solid #5a51ff; /* <-- Borde izquierdo con tu color */
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .office-card:hover {
+            background-color: #e0deff; /* <-- Hover a juego */
+        }
+        .office-card h4 {
             margin: 0 0 5px 0;
-            color: #0055ff;
-            font-size: 16px;
+            color: #5a51ff; /* <-- Título con tu color */
         }
-        .popup-content p {
+        .office-card p {
             margin: 5px 0;
             font-size: 14px;
         }
-        .btn-llegar {
+        .directions-link {
             display: inline-block;
             margin-top: 10px;
-            padding: 8px 12px;
-            background-color: #34a853; 
-            color: white !important;
-            text-decoration: none;
-            border-radius: 5px;
-            font-weight: bold;
             font-size: 13px;
+            color: #fff;
+            background-color: #28a745;
+            padding: 6px 12px;
+            text-decoration: none;
+            border-radius: 4px;
         }
-        .btn-llegar:hover {
-            background-color: #2b8c45;
+        .directions-link:hover {
+            background-color: #218838;
         }
-
-        /* Diseño para móviles: listado debajo del mapa */
-        @media (max-width: 768px) {
-            .main-container {
-                flex-direction: column;
-            }
-            #sidebar {
-                width: 100%;
-                height: 40%; /* El listado ocupa el 40% de la pantalla abajo */
-                border-right: none;
-                border-top: 1px solid #ccc;
-            }
-            #map {
-                height: 60%;
-            }
+        /* Estilos del Popup dentro del mapa */
+        .leaflet-popup-content h4 {
+            margin: 0 0 5px 0;
+            color: #5a51ff; /* <-- Título del popup con tu color */
+        }
+        .leaflet-popup-content p {
+            margin: 5px 0;
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h2>Oficinas de Endesa en Sevilla</h2>
-    </header>
+<h2>Encuentra tu Oficina Endesa en Sevilla</h2>
 
-    <div class="main-container">
-        <div id="sidebar"></div>
-        
-        <div id="map"></div>
-    </div>
-
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<div class="container">
+    <div class="office-list" id="office-list">
+        </div>
     
-    <script>
-        // 1. Inicializar el mapa centrado en Sevilla
-        const map = L.map('map').setView([37.3886, -5.9823], 13);
+    <div id="map"></div>
+</div>
 
-        // 2. Cargar los "tiles" (mapa base) de OpenStreetMap
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // 1. Datos de las oficinas de Sevilla
+    const offices = [
+        {
+            name: "Automatismos Raci ⚡🚙☀️",
+            lat: 37.4172,
+            lng: -5.9559,
+            address: "Calle Estrella Canopus, 25, 41015, Sevilla",
+            hours: "L‑J 9:00‑14:00 y 16:00‑19:00<br>V 9:00‑14:00 y 16:00‑18:00<br>S-D cerrado"
+        },
+        {
+            name: "Concentra ⚡🚙☀️",
+            lat: 37.3820,
+            lng: -5.9839,
+            address: "Avenida Málaga, 4, 41004, Sevilla",
+            hours: "L‑J 9:00‑14:00 y 16:00‑19:00<br>V 9:00‑14:00 y 16:00‑19:00<br>S-D cerrado"
+        },
+        {
+            name: "Energuia Web ⚡🚙",
+            lat: 37.3592,
+            lng: -5.9818,
+            address: "Calle Bami, 11, 41013, Sevilla",
+            hours: "L‑V 8:00‑18:00<br>S-D cerrado"
+        },
+        {
+            name: "Eurocontrol Global De Energia ⚡🚙☀️",
+            lat: 37.3698,
+            lng: -5.9610,
+            address: "Avenida Hytasa, 69, 41006, Sevilla",
+            hours: "L‑J 8:30‑17:00<br>V 8:30‑14:30<br>S-D cerrado"
+        },
+        {
+            name: "Servienergia ⚡🚙☀️",
+            lat: 37.3941,
+            lng: -5.9760,
+            address: "Calle Arroyo, 49, 41008, Sevilla",
+            hours: "L‑J 8:00‑18:00<br>V 8:00‑15:00<br>S-D cerrado"
+        },
+        {
+            name: "Servinform ⚡🚙",
+            lat: 37.3776,
+            lng: -6.0028,
+            address: "Avenida República Argentina, 40, 41011, Sevilla",
+            hours: "L‑J 8:00‑18:00<br>V 8:00‑16:00<br>S-D cerrado"
+        },
+        {
+            name: "Endesa Sevilla ⚡🚙☀️",
+            lat: 37.3825,
+            lng: -5.9754,
+            address: "Avenida Luis de Morales, 32, 41018, Sevilla",
+            hours: "L‑V 8:00‑18:00<br>S-D cerrado"
+        }
+    ];
 
-        // 3. Datos de las oficinas
-        const oficinas = [
-            {
-                nombre: "Automatismos Raci ⚡🚙☀️",
-                direccion: "Calle Estrella Canopus, 25, 41015, Sevilla",
-                horario: "L‑J 9:00‑14:00 y 16:00‑19:00<br>V 9:00‑14:00 y 16:00‑18:00<br>S-D cerrado",
-                lat: 37.4172, lng: -5.9559
-            },
-            {
-                nombre: "Concentra ⚡🚙☀️",
-                direccion: "Avenida Málaga, 4, 41004, Sevilla",
-                horario: "L‑J 9:00‑14:00 y 16:00‑19:00<br>V 9:00‑14:00 y 16:00‑19:00<br>S-D cerrado",
-                lat: 37.3820, lng: -5.9839
-            },
-            {
-                nombre: "Energuia Web ⚡🚙",
-                direccion: "Calle Bami, 11, 41013, Sevilla",
-                horario: "L‑V 8:00‑18:00<br>S-D cerrado",
-                lat: 37.3592, lng: -5.9818
-            },
-            {
-                nombre: "Eurocontrol Global De Energia ⚡🚙☀️",
-                direccion: "Avenida Hytasa, 69, 41006, Sevilla",
-                horario: "L‑J 8:30‑17:00<br>V 8:30‑14:30<br>S-D cerrado",
-                lat: 37.3698, lng: -5.9610
-            },
-            {
-                nombre: "Servienergia ⚡🚙☀️",
-                direccion: "Calle Arroyo, 49, 41008, Sevilla",
-                horario: "L‑J 8:00‑18:00<br>V 8:00‑15:00<br>S-D cerrado",
-                lat: 37.3941, lng: -5.9760
-            },
-            {
-                nombre: "Servinform ⚡🚙",
-                direccion: "Avenida República Argentina, 40, 41011, Sevilla",
-                horario: "L‑J 8:00‑18:00<br>V 8:00‑16:00<br>S-D cerrado",
-                lat: 37.3776, lng: -6.0028
-            },
-            {
-                nombre: "Endesa Sevilla ⚡🚙☀️",
-                direccion: "Avenida Luis de Morales, 32, 41018, Sevilla",
-                horario: "L‑V 8:00‑18:00<br>S-D cerrado",
-                lat: 37.3825, lng: -5.9754
-            }
-        ];
+    // 2. Inicializar el mapa centrado en Sevilla
+    const map = L.map('map').setView([37.3886, -5.9823], 13);
 
-        const sidebar = document.getElementById('sidebar');
+    // Añadir capa de OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
 
-        // 4. Recorrer los datos para crear los marcadores y el listado
-        oficinas.forEach(oficina => {
-            // URL de ruta de Google Maps
-            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(oficina.direccion)}`;
+    const listContainer = document.getElementById('office-list');
+    const markers = [];
 
-            // Contenido del bocadillo del mapa
-            const popupContent = `
-                <div class="popup-content">
-                    <h3>${oficina.nombre}</h3>
-                    <p><strong>📍 Ubicación:</strong> ${oficina.direccion}</p>
-                    <p><strong>🕒 Horario:</strong><br>${oficina.horario}</p>
-                    <a href="${googleMapsUrl}" target="_blank" class="btn-llegar">🚗 Cómo llegar</a>
-                </div>
-            `;
+    // 3. Recorrer los datos para crear marcadores y la lista
+    offices.forEach((office, index) => {
+        // Enlace dinámico a Google Maps basado en la dirección (más preciso que solo lat/lng para locales)
+        const mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(office.address)}`;
 
-            // Crear el marcador y añadirlo al mapa
-            const marker = L.marker([oficina.lat, oficina.lng])
-                .addTo(map)
-                .bindPopup(popupContent);
+        // Crear el contenido del Popup
+        let popupContent = `
+            <h4>${office.name}</h4>
+            <p>📍 ${office.address}</p>
+            <p>⏰ ${office.hours}</p>
+            <a href="${mapsLink}" target="_blank" class="directions-link">🗺️ Cómo llegar</a>
+        `;
 
-            // Crear el elemento de la lista para la barra lateral
-            const divItem = document.createElement('div');
-            divItem.className = 'office-item';
-            divItem.innerHTML = `
-                <h3>${oficina.nombre}</h3>
-                <p>${oficina.direccion}</p>
-            `;
+        // Añadir marcador al mapa
+        const marker = L.marker([office.lat, office.lng])
+            .addTo(map)
+            .bindPopup(popupContent);
+        
+        markers.push(marker);
 
-            // Hacer que al hacer clic en la lista, el mapa se mueva y abra el popup
-            divItem.addEventListener('click', () => {
-                // Centrar el mapa en la oficina con un poco de zoom (nivel 15)
-                map.setView([oficina.lat, oficina.lng], 15);
-                // Abrir la ventanita del marcador
-                marker.openPopup();
-            });
+        // Crear tarjeta en la lista lateral
+        const card = document.createElement('div');
+        card.className = 'office-card';
+        card.innerHTML = `
+            <h4>${office.name}</h4>
+            <p>📍 ${office.address}</p>
+            <p>⏰ ${office.hours}</p>
+            <a href="${mapsLink}" target="_blank" class="directions-link" onclick="event.stopPropagation();">🗺️ Cómo llegar</a>
+        `;
+        
+        // Al hacer clic en la tarjeta, centrar mapa y abrir popup (animación flyTo como en el de Valencia)
+        card.onclick = () => {
+            map.flyTo([office.lat, office.lng], 16);
+            marker.openPopup();
+        };
 
-            // Añadir el elemento al contenedor del listado
-            sidebar.appendChild(divItem);
-        });
-    </script>
+        listContainer.appendChild(card);
+    });
+</script>
+
 </body>
 </html>
