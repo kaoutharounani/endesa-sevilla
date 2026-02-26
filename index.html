@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa de Oficinas Endesa - Sevilla</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #0055ff;
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+        }
+        /* El contenedor del mapa necesita una altura definida */
+        #map {
+            height: 80vh;
+            width: 100%;
+        }
+        .popup-content h3 {
+            margin: 0 0 5px 0;
+            color: #0055ff;
+            font-size: 16px;
+        }
+        .popup-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .btn-llegar {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 12px;
+            background-color: #34a853; /* Verde Google Maps */
+            color: white !important;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-llegar:hover {
+            background-color: #2b8c45;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h2>Oficinas de Endesa en Sevilla</h2>
+    </header>
+
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script>
+        // 1. Inicializar el mapa centrado en Sevilla
+        const map = L.map('map').setView([37.3886, -5.9823], 13);
+
+        // 2. Cargar los "tiles" (imágenes del mapa) desde OpenStreetMap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // 3. Datos de tu tabla (Oficina, Dirección, Horario y Coordenadas aproximadas)
+        const oficinas = [
+            {
+                nombre: "Automatismos Raci ⚡🚙☀️",
+                direccion: "Calle Estrella Canopus, 25, 41015, Sevilla",
+                horario: "L‑J 9:00‑14:00 y 16:00‑19:00<br>V 9:00‑14:00 y 16:00‑18:00<br>S-D cerrado",
+                lat: 37.4172, lng: -5.9559
+            },
+            {
+                nombre: "Concentra ⚡🚙☀️",
+                direccion: "Avenida Málaga, 4, 41004, Sevilla",
+                horario: "L‑J 9:00‑14:00 y 16:00‑19:00<br>V 9:00‑14:00 y 16:00‑19:00<br>S-D cerrado",
+                lat: 37.3820, lng: -5.9839
+            },
+            {
+                nombre: "Energuia Web ⚡🚙",
+                direccion: "Calle Bami, 11, 41013, Sevilla",
+                horario: "L‑V 8:00‑18:00<br>S-D cerrado",
+                lat: 37.3592, lng: -5.9818
+            },
+            {
+                nombre: "Eurocontrol Global De Energia ⚡🚙☀️",
+                direccion: "Avenida Hytasa, 69, 41006, Sevilla",
+                horario: "L‑J 8:30‑17:00<br>V 8:30‑14:30<br>S-D cerrado",
+                lat: 37.3698, lng: -5.9610
+            },
+            {
+                nombre: "Servienergia ⚡🚙☀️",
+                direccion: "Calle Arroyo, 49, 41008, Sevilla",
+                horario: "L‑J 8:00‑18:00<br>V 8:00‑15:00<br>S-D cerrado",
+                lat: 37.3941, lng: -5.9760
+            },
+            {
+                nombre: "Servinform ⚡🚙",
+                direccion: "Avenida República Argentina, 40, 41011, Sevilla",
+                horario: "L‑J 8:00‑18:00<br>V 8:00‑16:00<br>S-D cerrado",
+                lat: 37.3776, lng: -6.0028
+            },
+            {
+                nombre: "Endesa Sevilla ⚡🚙☀️",
+                direccion: "Avenida Luis de Morales, 32, 41018, Sevilla",
+                horario: "L‑V 8:00‑18:00<br>S-D cerrado",
+                lat: 37.3825, lng: -5.9754
+            }
+        ];
+
+        // 4. Añadir los marcadores al mapa
+        oficinas.forEach(oficina => {
+            // Generar la URL para Google Maps (dirigiendo a la dirección exacta)
+            const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(oficina.direccion)}`;
+
+            // Crear el contenido de la ventana emergente (Popup)
+            const popupContent = `
+                <div class="popup-content">
+                    <h3>${oficina.nombre}</h3>
+                    <p><strong>📍 Ubicación:</strong> ${oficina.direccion}</p>
+                    <p><strong>🕒 Horario:</strong><br>${oficina.horario}</p>
+                    <a href="${googleMapsUrl}" target="_blank" class="btn-llegar">🚗 Cómo llegar (Google Maps)</a>
+                </div>
+            `;
+
+            // Añadir el marcador
+            L.marker([oficina.lat, oficina.lng])
+                .addTo(map)
+                .bindPopup(popupContent);
+        });
+    </script>
+</body>
+</html>
