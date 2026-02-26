@@ -13,18 +13,56 @@
             margin: 0;
             padding: 0;
             background-color: #f4f4f4;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Ocupa toda la altura de la pantalla */
         }
         header {
             background-color: #0055ff;
             color: white;
             text-align: center;
             padding: 1rem 0;
+            flex-shrink: 0;
         }
-        /* El contenedor del mapa necesita una altura definida */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        /* Estilos del panel lateral (listado) */
+        #sidebar {
+            width: 350px;
+            background-color: white;
+            overflow-y: auto; /* Permite hacer scroll si hay muchas oficinas */
+            border-right: 1px solid #ccc;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .office-item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .office-item:hover {
+            background-color: #f0f5ff; /* Color azul clarito al pasar el ratón */
+        }
+        .office-item h3 {
+            margin: 0 0 5px 0;
+            color: #0055ff;
+            font-size: 15px;
+        }
+        .office-item p {
+            margin: 0;
+            font-size: 13px;
+            color: #555;
+        }
+        /* Estilos del mapa */
         #map {
-            height: 80vh;
+            flex: 1; /* Ocupa el resto del espacio disponible */
             width: 100%;
         }
+        /* Estilos de la ventana emergente en el mapa */
         .popup-content h3 {
             margin: 0 0 5px 0;
             color: #0055ff;
@@ -38,7 +76,7 @@
             display: inline-block;
             margin-top: 10px;
             padding: 8px 12px;
-            background-color: #34a853; /* Verde Google Maps */
+            background-color: #34a853; 
             color: white !important;
             text-decoration: none;
             border-radius: 5px;
@@ -48,6 +86,22 @@
         .btn-llegar:hover {
             background-color: #2b8c45;
         }
+
+        /* Diseño para móviles: listado debajo del mapa */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            #sidebar {
+                width: 100%;
+                height: 40%; /* El listado ocupa el 40% de la pantalla abajo */
+                border-right: none;
+                border-top: 1px solid #ccc;
+            }
+            #map {
+                height: 60%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -56,7 +110,11 @@
         <h2>Oficinas de Endesa en Sevilla</h2>
     </header>
 
-    <div id="map"></div>
+    <div class="main-container">
+        <div id="sidebar"></div>
+        
+        <div id="map"></div>
+    </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -64,12 +122,12 @@
         // 1. Inicializar el mapa centrado en Sevilla
         const map = L.map('map').setView([37.3886, -5.9823], 13);
 
-        // 2. Cargar los "tiles" (imágenes del mapa) desde OpenStreetMap
+        // 2. Cargar los "tiles" (mapa base) de OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // 3. Datos de tu tabla (Oficina, Dirección, Horario y Coordenadas aproximadas)
+        // 3. Datos de las oficinas
         const oficinas = [
             {
                 nombre: "Automatismos Raci ⚡🚙☀️",
@@ -115,25 +173,46 @@
             }
         ];
 
-        // 4. Añadir los marcadores al mapa
+        const sidebar = document.getElementById('sidebar');
+
+        // 4. Recorrer los datos para crear los marcadores y el listado
         oficinas.forEach(oficina => {
-            // Generar la URL para Google Maps (dirigiendo a la dirección exacta)
+            // URL de ruta de Google Maps
             const googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(oficina.direccion)}`;
 
-            // Crear el contenido de la ventana emergente (Popup)
+            // Contenido del bocadillo del mapa
             const popupContent = `
                 <div class="popup-content">
                     <h3>${oficina.nombre}</h3>
                     <p><strong>📍 Ubicación:</strong> ${oficina.direccion}</p>
                     <p><strong>🕒 Horario:</strong><br>${oficina.horario}</p>
-                    <a href="${googleMapsUrl}" target="_blank" class="btn-llegar">🚗 Cómo llegar (Google Maps)</a>
+                    <a href="${googleMapsUrl}" target="_blank" class="btn-llegar">🚗 Cómo llegar</a>
                 </div>
             `;
 
-            // Añadir el marcador
-            L.marker([oficina.lat, oficina.lng])
+            // Crear el marcador y añadirlo al mapa
+            const marker = L.marker([oficina.lat, oficina.lng])
                 .addTo(map)
                 .bindPopup(popupContent);
+
+            // Crear el elemento de la lista para la barra lateral
+            const divItem = document.createElement('div');
+            divItem.className = 'office-item';
+            divItem.innerHTML = `
+                <h3>${oficina.nombre}</h3>
+                <p>${oficina.direccion}</p>
+            `;
+
+            // Hacer que al hacer clic en la lista, el mapa se mueva y abra el popup
+            divItem.addEventListener('click', () => {
+                // Centrar el mapa en la oficina con un poco de zoom (nivel 15)
+                map.setView([oficina.lat, oficina.lng], 15);
+                // Abrir la ventanita del marcador
+                marker.openPopup();
+            });
+
+            // Añadir el elemento al contenedor del listado
+            sidebar.appendChild(divItem);
         });
     </script>
 </body>
